@@ -8,11 +8,11 @@ config :swarm_ex,
   default_timeout: 5_000,
   max_retries: 3
 
-# Configure esbuild (the version is fetched from your package.json or mix.lock)
+
 config :esbuild,
-  version: "0.25.0", # <-- Check your mix.lock for the exact version
+version: "0.25.0",
   default: [
-    args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
+    args: ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/js --external:/fonts/* --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => Path.expand("../node_modules", __DIR__)}
   ]

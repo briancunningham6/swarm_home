@@ -11,10 +11,10 @@ defmodule SwarmExWeb.Endpoint do
     gzip: false
 
   plug Plug.Static,
-    at: "/",
-    from: :swarm_ex,
-    gzip: false,
-    only: ~w(favicon.ico robots.txt)
+  at: "/",
+  from: {:swarm_ex, "priv/static"},
+  gzip: false,
+  only: ~w(assets js css fonts images favicon.ico robots.txt)
 
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
@@ -37,4 +37,5 @@ defmodule SwarmExWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug SwarmExWeb.Router
+
 end

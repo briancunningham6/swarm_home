@@ -24,6 +24,8 @@ defmodule SwarmEx.Application do
       # Supervisor for client processes
       {SwarmEx.ClientSupervisor, []},
 
+      {Phoenix.PubSub, name: SwarmEx.PubSub},
+
       SwarmExWeb.Endpoint
 
       # Add any additional supervisors here
