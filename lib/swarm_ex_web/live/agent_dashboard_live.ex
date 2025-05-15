@@ -3,6 +3,20 @@ defmodule SwarmExWeb.AgentDashboardLive do
   use Phoenix.LiveView
   alias SwarmEx.Client
 
+  defmodule DashboardAgent do
+    use SwarmEx.Agent
+
+    @impl true
+    def init(opts) do
+      {:ok, opts}
+    end
+
+    @impl true
+    def handle_message(message, state) do
+      {:ok, "Received: #{message}", state}
+    end
+  end
+
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(SwarmEx.PubSub, "agents")
@@ -28,14 +42,14 @@ defmodule SwarmExWeb.AgentDashboardLive do
   end
 
   def handle_event("create_agent", %{"description" => description}, socket) do
-    case Client.create_agent(socket.assigns.client, SwarmEx.Agent, instruction: description) do
+    case Client.create_agent(socket.assigns.client, DashboardAgent, instruction: description) do
       {:ok, agent_id} ->
         {:noreply, 
          socket 
          |> put_flash(:info, "Agent created successfully")
          |> assign(agents: [agent_id | socket.assigns.agents])}
       {:error, error} ->
-        {:noreply, put_flash(socket, :error, "Failed to create agent: #{error}")}
+        {:noreply, put_flash(socket, :error, "Failed to create agent: #{inspect(error)}")}
     end
   end
 
@@ -54,7 +68,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
         )
         {:noreply, assign(socket, messages: messages, current_message: "")}
       {:error, error} ->
-        {:noreply, put_flash(socket, :error, "Failed to send message: #{error}")}
+        {:noreply, put_flash(socket, :error, "Failed to send message: #{inspect(error)}")}
     end
   end
 
@@ -67,7 +81,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
          |> assign(agents: List.delete(socket.assigns.agents, agent_id),
                   selected_agent: nil)}
       {:error, error} ->
-        {:noreply, put_flash(socket, :error, "Failed to terminate agent: #{error}")}
+        {:noreply, put_flash(socket, :error, "Failed to terminate agent: #{inspect(error)}")}
     end
   end
 
