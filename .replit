@@ -17,4 +17,12 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "module load elixir"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mix deps.get"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "mix phx.server"
