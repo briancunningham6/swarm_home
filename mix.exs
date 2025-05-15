@@ -33,6 +33,10 @@ defmodule SwarmEx.MixProject do
       {:jason, "~> 1.4.4"},
       {:telemetry, "~> 1.0"},
       {:uuid, "~> 1.1.8"},
+      {:phoenix, "~> 1.7.0"},
+      {:phoenix_live_view, "~> 0.20.0"},
+      {:phoenix_html, "~> 3.3"},
+      {:plug_cowboy, "~> 2.6"},
       # For testing
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
