@@ -324,7 +324,9 @@ defmodule SwarmEx.Agent do
                     message: "Agent health check detected unhealthy status"
                   )
 
-                attempt_recovery(error, updated_state)
+                # Adapt the return type from attempt_recovery
+                {:reply, _recovery_payload, new_recovered_state} = attempt_recovery(error, updated_state)
+                {:noreply, new_recovered_state}
             end
 
           {:error, reason} ->
@@ -336,7 +338,9 @@ defmodule SwarmEx.Agent do
               )
 
             Logger.error(Exception.message(error))
-            attempt_recovery(error, state)
+            # Adapt the return type from attempt_recovery
+            {:reply, _recovery_payload, new_recovered_state} = attempt_recovery(error, state)
+            {:noreply, new_recovered_state}
         end
       end
 
