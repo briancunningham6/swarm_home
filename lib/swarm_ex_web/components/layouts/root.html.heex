@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-100">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>SwarmEx Dashboard</title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"}/>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}></script>
+  </head>
+  <body class="h-full">
+    <div class="min-h-full">
+      <nav class="bg-gray-800">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="flex h-16 items-center justify-between">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <span class="text-white text-xl font-bold">SwarmEx</span>
+              </div>
+              <div class="ml-10 flex items-baseline space-x-4">
+                <%= live_redirect "Agents", to: "/", class: "text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2" %>
+                <%= live_redirect "Settings", to: "/settings", class: "text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div class="py-10">
+        <main>
+          <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <%= if flash = live_flash(@flash, :error) do %>
+              <div class="mb-4 rounded-md bg-red-50 p-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-red-800"><%= flash %></p>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            <%= @inner_content %>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

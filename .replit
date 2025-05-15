@@ -5,4 +5,16 @@ run = "mix test"
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "mix test"]
+run = ["sh", "-c", "mix phx.server"]
+
+[workflows]
+runButton = "Dev"
+
+[[workflows.workflow]]
+name = "Dev"
+author = 38804915
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mix phx.server"
