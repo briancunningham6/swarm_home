@@ -2,6 +2,16 @@ defmodule SwarmExWeb.AgentDashboardLive do
   use Phoenix.LiveView
   alias SwarmEx.Client
 
+    defmodule DefaultResponse do
+    @moduledoc "Defines a default structure for AI responses."
+    use Ecto.Schema
+
+    @primary_key false
+    embedded_schema do
+      field :text_response, :string
+    end
+  end
+
   defmodule DashboardAgent do
     use SwarmEx.Agent
 
@@ -12,8 +22,22 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
     @impl true
     def handle_message(message, state) do
-      IO.inspect(state, label: "State")
-      {:ok, "Received: #{message}", state}
+
+    response = Instructor.chat_completion(
+      model: "gpt-4o-mini",
+      response_model: SwarmExWeb.AgentDashboardLive.DefaultResponse,
+      messages: [
+        %{
+          role: "user",
+          content: message
+        }
+      ]
+    )
+    case response do
+      {:ok, reply } -> {:ok, reply, state }
+      {:error, error } -> SwarmEx.Error.AgentError.exception(
+        agent: __MODULE__, reason: error)
+    end
     end
   end
 
@@ -155,10 +179,14 @@ defmodule SwarmExWeb.AgentDashboardLive do
       <div class="flex-1 flex flex-col">
         <%= if @selected_agent do %>
           <div class="flex-1 p-4 overflow-y-auto">
-            <%= for {type, content} <- @messages[@selected_agent] || [] do %>
-              <div class={"mb-4 #{if type == :user, do: "text-right"}"} id={"msg-#{type}-#{content |> String.slice(0, 10) |> String.replace(~r/[^a-zA-Z0-9]/, "")}-#{System.unique_integer([:positive])}"}>
+            <%= for {type, raw_content} <- @messages[@selected_agent] || [] do %>
+              <% content_to_display = if type == :agent, do: raw_content.text_response, else: raw_content %>
+              <% content_for_id = if type == :agent, do: raw_content.text_response, else: raw_content %>
+              <div class={"mb-4 #{if type == :user, do: "text-right"}"}
+                   id={"msg-#{type}-#{content_for_id |> String.slice(0, 10) |> String.replace(~r/[^a-zA-Z0-9]/, "")}-#{System.unique_integer([:positive])}"}
+              >
                 <div class={"inline-block p-2 rounded #{if type == :user, do: "bg-blue-100", else: "bg-gray-100"}"}>
-                  <%= content %>
+                  <%= content_to_display %>
                 </div>
               </div>
             <% end %>

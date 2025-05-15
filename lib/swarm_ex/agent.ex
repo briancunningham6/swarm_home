@@ -224,7 +224,7 @@ defmodule SwarmEx.Agent do
       @spec send_message(pid() | atom() | String.t(), term()) ::
               {:ok, term()} | {:error, term()}
       def send_message(agent, message) do
-        GenServer.call(via_tuple(agent), {:message, message})
+        GenServer.call(via_tuple(agent), {:message, message},:infinity)
       end
 
       @spec get_state(pid() | atom() | String.t()) ::

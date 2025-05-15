@@ -111,7 +111,7 @@ defmodule SwarmEx do
   @spec send_message_to_pid(pid(), message()) :: response()
   def send_message_to_pid(agent_pid, message) when is_pid(agent_pid) do
     try do
-      GenServer.call(agent_pid, {:message, message})
+      GenServer.call(agent_pid, {:message, message},:infinity)
     catch
       :exit, reason ->
         {:error,

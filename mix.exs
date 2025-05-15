@@ -39,6 +39,8 @@ defmodule SwarmEx.MixProject do
       {:plug_cowboy, "~> 2.6"},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
+      {:openai_ex, "~> 0.8.4"},
+      {:instructor, "~> 0.0.5"},
       # For testing
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},

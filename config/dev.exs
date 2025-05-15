@@ -1,6 +1,10 @@
 
 import Config
 
+config :instructor,
+  adapter: Instructor.Adapters.OpenAI,
+  openai: [api_key: System.fetch_env!("OPENAI_API_KEY")]
+
 # Configure your database
 config :swarm_ex, SwarmEx.Repo,
   database: Path.expand("../swarm_ex_dev.db", Path.dirname(__ENV__.file)),

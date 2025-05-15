@@ -91,7 +91,7 @@ defmodule SwarmEx.Client do
   @spec send_message(GenServer.server(), agent_id(), term()) ::
           {:ok, term()} | {:error, term()}
   def send_message(client, agent_id, message) do
-    GenServer.call(client, {:send_message, agent_id, message})
+    GenServer.call(client, {:send_message, agent_id, message},:infinity)
   end
 
   @doc """
