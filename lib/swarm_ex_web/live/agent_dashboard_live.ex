@@ -18,7 +18,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
   end
 
   def handle_event("create_agent", %{"description" => description}, socket) do
-    case Client.create_agent(description) do
+    case Client.create_agent(self(), SwarmEx.Agent, instruction: description) do
       {:ok, agent_id} ->
         {:noreply, 
          socket 
