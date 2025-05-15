@@ -1,4 +1,3 @@
-
 defmodule SwarmExWeb.AgentDashboardLive do
   use Phoenix.LiveView
   alias SwarmEx.Client
@@ -84,7 +83,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
   def handle_event("send_message", %{"message" => message}, socket) do
     selected_pid = socket.assigns.selected_agent
     if is_pid(selected_pid) do
-      case Client.send_message(selected_pid, message) do
+      case Client.send_message(socket.assigns.client, socket.assigns.selected_agent, message) do
         {:ok, response} ->
           messages = Map.update(
             socket.assigns.messages,
