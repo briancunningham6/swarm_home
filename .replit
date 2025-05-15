@@ -1,4 +1,4 @@
-modules = ["elixir-1_15"]
+modules = ["elixir-1_18.2"]
 run = "mix test"
 
 [nix]
@@ -8,7 +8,6 @@ channel = "stable-24_05"
 run = ["sh", "-c", "mix phx.server"]
 
 [workflows]
-runButton = "Dev"
 
 [[workflows.workflow]]
 name = "Dev"
