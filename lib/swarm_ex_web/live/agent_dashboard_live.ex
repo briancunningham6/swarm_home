@@ -6,19 +6,29 @@ defmodule SwarmExWeb.AgentDashboardLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(SwarmEx.PubSub, "agents")
+      {:ok, client} = SwarmEx.create_network()
+      {:ok, assign(socket,
+        client: client,
+        agents: [],
+        selected_agent: nil,
+        new_agent_description: "",
+        messages: %{},
+        current_message: ""
+      )}
+    else
+      {:ok, assign(socket,
+        client: nil,
+        agents: [],
+        selected_agent: nil,
+        new_agent_description: "",
+        messages: %{},
+        current_message: ""
+      )}
     end
-
-    {:ok, assign(socket,
-      agents: [],
-      selected_agent: nil,
-      new_agent_description: "",
-      messages: %{},
-      current_message: ""
-    )}
   end
 
   def handle_event("create_agent", %{"description" => description}, socket) do
-    case Client.create_agent(self(), SwarmEx.Agent, instruction: description) do
+    case Client.create_agent(socket.assigns.client, SwarmEx.Agent, instruction: description) do
       {:ok, agent_id} ->
         {:noreply, 
          socket 
