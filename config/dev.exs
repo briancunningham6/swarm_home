@@ -15,9 +15,8 @@ config :swarm_ex, SwarmExWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "developmentkeysupersecrethelloworld12345678901234567890",
-  live_view: [signing_salt: "GD-tJFvPgdYcLgAj"],
-  watchers: []
+  secret_key_base: "developmentkeysupersecrethelentkeysupersecrethelentkeysupersecrethelloworld12345678901234567890",
+  live_view: [signing_salt: "GD-tJFvPgdYcLgAj"]
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"

@@ -82,9 +82,7 @@ defmodule SwarmExWeb do
     quote do
       # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components and translation
-      # import SwarmExWeb.CoreComponents # Still commented out
-      # import SwarmExWeb.Gettext # Temporarily commented out
+
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

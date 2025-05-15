@@ -1,7 +1,4 @@
 
-// Import dependencies
-import "../css/app.css"
-
 // Import Phoenix HTML helpers (optional)
 import "phoenix_html"
 // Import Phoenix LiveView

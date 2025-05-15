@@ -37,6 +37,8 @@ defmodule SwarmEx.MixProject do
       {:phoenix_live_view, "~> 0.20.0"},
       {:phoenix_html, "~> 3.3"},
       {:plug_cowboy, "~> 2.6"},
+      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
+      {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       # For testing
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
