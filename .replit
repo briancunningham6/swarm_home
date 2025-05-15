@@ -8,6 +8,7 @@ channel = "stable-24_05"
 run = ["sh", "-c", "mix phx.server"]
 
 [workflows]
+runButton = "Dev"
 
 [[workflows.workflow]]
 name = "Dev"
