@@ -4,11 +4,17 @@ defmodule SwarmExWeb.Endpoint do
 
   socket "/live", Phoenix.LiveView.Socket
 
+  # Serve static assets
+  plug Plug.Static,
+    at: "/assets",
+    from: {:swarm_ex, "priv/static/assets"},
+    gzip: false
+
   plug Plug.Static,
     at: "/",
     from: :swarm_ex,
     gzip: false,
-    only: ~w(assets fonts images favicon.ico robots.txt css js)
+    only: ~w(favicon.ico robots.txt)
 
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
