@@ -22,7 +22,9 @@ defmodule SwarmEx.Application do
        strategy: :one_for_one, name: SwarmEx.AgentSupervisor, max_restarts: 3, max_seconds: 5},
 
       # Supervisor for client processes
-      {SwarmEx.ClientSupervisor, []}
+      {SwarmEx.ClientSupervisor, []},
+
+      SwarmExWeb.Endpoint
 
       # Add any additional supervisors here
     ]

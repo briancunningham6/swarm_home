@@ -11,11 +11,12 @@ config :swarm_ex, SwarmEx.Repo,
 # For development, we disable any cache and enable
 # debugging and code reloading.
 config :swarm_ex, SwarmExWeb.Endpoint,
-  http: [ip: {0, 0, 0, 0}, port: 4005],
+  http: [port: 4005],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "developmentkeysupersecrethelloworld12345678901234567890",
+  live_view: [signing_salt: "GD-tJFvPgdYcLgAj"],
   watchers: []
 
 # Do not include metadata nor timestamps in development logs
