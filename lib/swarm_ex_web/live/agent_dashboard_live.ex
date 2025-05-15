@@ -106,7 +106,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
             <div class="flex justify-between items-center p-2 bg-gray-100 rounded">
               <button phx-click="select_agent" phx-value-id={agent_id}
                       class={"#{if @selected_agent == agent_id, do: "font-bold", else: ""}"}>
-                <%= agent_id %>
+                Agent <%= inspect(agent_id) %>
               </button>
               <button phx-click="kill_agent" phx-value-id={agent_id}
                       class="text-red-500 hover:text-red-700">
