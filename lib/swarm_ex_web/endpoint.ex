@@ -8,7 +8,7 @@ defmodule SwarmExWeb.Endpoint do
     at: "/",
     from: :swarm_ex,
     gzip: false,
-    only: ~w(assets fonts images favicon.ico robots.txt)
+    only: ~w(assets fonts images favicon.ico robots.txt css js)
 
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
