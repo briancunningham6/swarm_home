@@ -12,6 +12,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
     @impl true
     def handle_message(message, state) do
+      IO.inspect(state, label: "State")
       {:ok, "Received: #{message}", state}
     end
   end
@@ -20,14 +21,17 @@ defmodule SwarmExWeb.AgentDashboardLive do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(SwarmEx.PubSub, "agents")
       {:ok, client} = SwarmEx.create_network()
+      {:ok, initial_agent_ids} = Client.list_agents(client)
+
       {:ok, assign(socket,
         client: client,
-        agents: [],
+        agents: initial_agent_ids, # Populate with existing agent string IDs
         selected_agent: nil,
         new_agent_description: "",
-        messages: %{},
+        messages: Map.new(initial_agent_ids, fn id -> {id, []} end), # Initialize messages for existing agents
         current_message: ""
       )}
+
     else
       {:ok, assign(socket,
         client: nil,
@@ -42,52 +46,40 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
   def handle_event("create_agent", %{"description" => description}, socket) do
     case Client.create_agent(socket.assigns.client, DashboardAgent, instruction: description) do
-      {:ok, agent_id} ->
+      {:ok, agent_id_string} -> # Now receives the string agent_id
+        IO.puts("Agent created with ID: #{agent_id_string}")
         {:noreply,
          socket
          |> put_flash(:info, "Agent created successfully")
-         |> assign(agents: [agent_id | socket.assigns.agents])}
+         |> assign(agents: [agent_id_string | socket.assigns.agents], # Store string ID
+                   messages: Map.put(socket.assigns.messages, agent_id_string, []))} # Initialize messages for new agent
       {:error, error} ->
         {:noreply, put_flash(socket, :error, "Failed to create agent: #{inspect(error)}")}
     end
   end
 
-  defp string_to_pid(str) do
-    # Expects a string like "#PID<0.123.0>"
-    if String.starts_with?(str, "#PID<") && String.ends_with?(str, ">") do
-      # Extract the "0.123.0" part
-      inner_content = String.slice(str, 5, String.length(str) - 6)
-      # :erlang.list_to_pid expects a charlist like '<0.123.0>'
-      pid_charlist = String.to_charlist("<" <> inner_content <> ">")
-      try do
-        pid = :erlang.list_to_pid(pid_charlist)
-        {:ok, pid}
-      rescue
-        ArgumentError -> :error # If the format is invalid for list_to_pid
-      end
-    else
-      :error
-    end
-  end
-
   def handle_event("select_agent", %{"id" => agent_id_string}, socket) do
-    case string_to_pid(agent_id_string) do
-      {:ok, pid} ->
-        {:noreply, assign(socket, selected_agent: pid)}
-      :error ->
-        # Handle malformed PID string, perhaps flash an error
-        {:noreply, put_flash(socket, :error, "Invalid agent ID format.")}
-    end
+    # agent_id_string is the actual string ID from phx-value-id
+    {:noreply, assign(socket, selected_agent: agent_id_string)}
   end
 
   def handle_event("send_message", %{"message" => message}, socket) do
-    selected_pid = socket.assigns.selected_agent
-    if is_pid(selected_pid) do
-      case Client.send_message(socket.assigns.client, socket.assigns.selected_agent, message) do
+    selected_agent_id = socket.assigns.selected_agent # This is now a string ID
+
+    IO.inspect(selected_agent_id, label: "Selected Agent ID (should be string)")
+    IO.puts("??")
+    # Check if a string agent ID is selected
+    if is_binary(selected_agent_id) && selected_agent_id != "" do
+      IO.inspect(socket.assigns.client)
+      IO.inspect(selected_agent_id, label: "Passing agent_id to Client.send_message")
+      IO.inspect(message)
+      # Call Client.send_message with the client PID, string agent ID, and message
+      case Client.send_message(socket.assigns.client, selected_agent_id, message) do
         {:ok, response} ->
+          IO.puts("yes this worked")
           messages = Map.update(
             socket.assigns.messages,
-            selected_pid,
+            selected_agent_id, # Use the correct string ID variable
             [{:user, message}, {:agent, response}],
             &(&1 ++ [{:user, message}, {:agent, response}])
           )
@@ -101,32 +93,29 @@ defmodule SwarmExWeb.AgentDashboardLive do
   end
 
   def handle_event("kill_agent", %{"id" => agent_id_string}, socket) do
-    case string_to_pid(agent_id_string) do
-      {:ok, pid} ->
-        case Client.stop_agent(pid) do
-          :ok ->
-            new_agents = List.delete(socket.assigns.agents, pid)
-            new_selected_agent =
-              if socket.assigns.selected_agent == pid do
-                nil
-              else
-                socket.assigns.selected_agent
-              end
+    # agent_id_string is the actual string ID from phx-value-id
+    case Client.stop_agent(socket.assigns.client, agent_id_string) do
+      :ok ->
+        new_agents = List.delete(socket.assigns.agents, agent_id_string)
+        new_selected_agent =
+          if socket.assigns.selected_agent == agent_id_string do
+            nil
+          else
+            socket.assigns.selected_agent
+          end
 
-            {:noreply,
-             socket
-             |> put_flash(:info, "Agent terminated successfully")
-             |> assign(
-               agents: new_agents,
-               selected_agent: new_selected_agent,
-               messages: Map.delete(socket.assigns.messages, pid) # Also clear messages for killed agent
-             )}
-          {:error, error} ->
-            {:noreply, put_flash(socket, :error, "Failed to terminate agent: #{inspect(error)}")}
-        end
-      :error ->
-        # Handle malformed PID string
-        {:noreply, put_flash(socket, :error, "Invalid agent ID format for termination.")}
+        {:noreply,
+         socket
+         |> put_flash(:info, "Agent terminated successfully")
+         |> assign(
+           agents: new_agents,
+           selected_agent: new_selected_agent,
+           messages: Map.delete(socket.assigns.messages, agent_id_string) # Clear messages by string ID
+         )}
+      {:error, :agent_not_found} ->
+        {:noreply, put_flash(socket, :error, "Agent #{agent_id_string} not found.")}
+      {:error, error} ->
+        {:noreply, put_flash(socket, :error, "Failed to terminate agent: #{inspect(error)}")}
     end
   end
 
@@ -149,12 +138,12 @@ defmodule SwarmExWeb.AgentDashboardLive do
         <div class="space-y-2">
           <%= for agent_id <- @agents do %>
             <div class="flex justify-between items-center p-2 bg-gray-100 rounded">
-              <button phx-click="select_agent" phx-value-id={inspect(agent_id)}
+              <button phx-click="select_agent" phx-value-id={agent_id}
                       class={"#{if @selected_agent == agent_id, do: "font-bold", else: ""}"}
                       >
-                Agent <%= inspect(agent_id) %>
+                Agent <%= agent_id %>
               </button>
-              <button phx-click="kill_agent" phx-value-id={inspect(agent_id)}
+              <button phx-click="kill_agent" phx-value-id={agent_id}
                       class="text-red-500 hover:text-red-700">
                 ×
               </button>
@@ -167,7 +156,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
         <%= if @selected_agent do %>
           <div class="flex-1 p-4 overflow-y-auto">
             <%= for {type, content} <- @messages[@selected_agent] || [] do %>
-              <div class={"mb-4 #{if type == :user, do: "text-right"}"}>
+              <div class={"mb-4 #{if type == :user, do: "text-right"}"} id={"msg-#{type}-#{content |> String.slice(0, 10) |> String.replace(~r/[^a-zA-Z0-9]/, "")}-#{System.unique_integer([:positive])}"}>
                 <div class={"inline-block p-2 rounded #{if type == :user, do: "bg-blue-100", else: "bg-gray-100"}"}>
                   <%= content %>
                 </div>

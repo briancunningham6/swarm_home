@@ -61,6 +61,12 @@ defmodule SwarmEx.Client do
   def start_link(opts \\ []) do
     {name, opts} = Keyword.pop(opts, :name)
 
+    IO.puts("Starting SwarmEx Client with options: #{inspect(opts)}")
+
+
+    IO.inspect(GenServer.start_link(__MODULE__, opts))
+
+
     case name do
       nil -> GenServer.start_link(__MODULE__, opts)
       name -> GenServer.start_link(__MODULE__, opts, name: via_tuple(name))
@@ -112,6 +118,14 @@ defmodule SwarmEx.Client do
     GenServer.call(client, :list_agents)
   end
 
+  @doc """
+  Stops a specific agent in the network by its string ID.
+  """
+  @spec stop_agent(GenServer.server(), agent_id()) :: :ok | {:error, term()}
+  def stop_agent(client, agent_id) do
+    GenServer.call(client, {:stop_agent, agent_id})
+  end
+
   # Server Callbacks
 
   @impl true
@@ -139,9 +153,9 @@ defmodule SwarmEx.Client do
         agent_id = opts[:name] || Utils.generate_id("agent")
         new_agents = Map.put(state.active_agents, agent_id, pid)
 
-        Process.monitor(pid)
-
-        {:reply, {:ok, pid}, %{state | active_agents: new_agents}}
+        Process.monitor(pid) # Monitor the agent process
+        # Reply with the string agent_id, not the PID
+        {:reply, {:ok, agent_id}, %{state | active_agents: new_agents}}
 
       {:error, _} = error ->
         {:reply, error, state}
@@ -149,12 +163,27 @@ defmodule SwarmEx.Client do
   end
 
   def handle_call({:send_message, agent_id, message}, _from, state) do
+    IO.puts("Here is where the issue is")
+    IO.inspect(agent_id, label: "Received agent_id (should be string)")
+    IO.inspect(state.active_agents)
+
     case Map.fetch(state.active_agents, agent_id) do
-      {:ok, pid} ->
-        result = GenServer.call(pid, {:message, message})
-        {:reply, result, state}
+      {:ok, agent_pid} ->
+        # Call the agent process using its PID
+        # The agent's handle_call({:message, ...}) returns {:reply, {:ok, response}, new_state}
+        # GenServer.call extracts the second element, which is {:ok, response}
+        case GenServer.call(agent_pid, {:message, message}) do
+          {:ok, response} ->
+            # Reply to the original caller with the agent's response
+            {:reply, {:ok, response}, state}
+
+          {:error, reason} ->
+            # Reply to the original caller with the agent's error
+            {:reply, {:error, reason}, state}
+        end
 
       :error ->
+        # Agent ID not found in active_agents
         {:reply, {:error, :agent_not_found}, state}
     end
   end
@@ -171,6 +200,19 @@ defmodule SwarmEx.Client do
   def handle_call(:list_agents, _from, state) do
     agents = Map.keys(state.active_agents)
     {:reply, {:ok, agents}, state}
+  end
+
+  def handle_call({:stop_agent, agent_id}, _from, state) do
+    case Map.fetch(state.active_agents, agent_id) do
+      {:ok, pid_to_stop} ->
+        # The :DOWN message handled in handle_info will clean up active_agents
+        # We might want to ensure Agent.stop or equivalent is called if the agent
+        # needs to do specific cleanup before GenServer.stop.
+        GenServer.stop(pid_to_stop, :normal) # Stop the agent process
+        {:reply, :ok, state} # active_agents will be updated via :DOWN message
+      :error ->
+        {:reply, {:error, :agent_not_found}, state}
+    end
   end
 
   @impl true

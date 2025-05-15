@@ -243,6 +243,7 @@ defmodule SwarmEx.Agent do
       @spec handle_call(term(), GenServer.from(), SwarmEx.Agent.agent_state()) ::
               {:reply, term(), SwarmEx.Agent.agent_state()}
       def handle_call({:message, message}, _from, state) do
+        IO.puts("!!!!!@£$!!!!!!!")
         if Map.get(state, :health_status) == :unhealthy do
           error =
             Error.AgentError.exception(
@@ -258,6 +259,7 @@ defmodule SwarmEx.Agent do
           Telemetry.span_agent_message(self(), :message, network_id, fn ->
             case handle_message(message, state) do
               {:ok, response, new_state} ->
+                IO.puts("This is the message that is getting sent back")
                 {:reply, {:ok, response}, new_state}
 
               {:error, reason} ->
