@@ -1,0 +1,8 @@
+modules = ["elixir-1_15"]
+run = "mix test"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = ["sh", "-c", "mix test"]
