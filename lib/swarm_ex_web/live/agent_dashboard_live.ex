@@ -225,12 +225,14 @@ defmodule SwarmExWeb.AgentDashboardLive do
           <div class="col-span-9 bg-white rounded-xl shadow-lg flex flex-col h-[85vh]">
             <%= if @selected_agent do %>
               <div class="flex-1 p-6 overflow-y-auto">
-                <%= for {type, raw_content} <- @messages[@selected_agent] || [] do %>
-                  <% content_to_display = if type == :agent, do: raw_content.text_response, else: raw_content %>
-                  <% content_for_id = if type == :agent, do: raw_content.text_response, else: raw_content %>
+                <%= for {type, content} <- @messages[@selected_agent] || [] do %>
                   <div class={"mb-4 #{if type == :user, do: 'flex justify-end'}"}>
                     <div class={"max-w-[80%] p-4 rounded-2xl #{if type == :user, do: 'bg-indigo-600 text-white', else: 'bg-gray-100 text-gray-800'}"}>
-                      <%= content_to_display %>
+                      <%= if is_map(content) and Map.has_key?(content, :text_response) do %>
+                        <%= content.text_response %>
+                      <% else %>
+                        <%= content %>
+                      <% end %>
                     </div>
                   </div>
                 <% end %>
