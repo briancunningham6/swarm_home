@@ -1,4 +1,3 @@
-
 defmodule SwarmExWeb.AgentDashboardLive do
   use Phoenix.LiveView
   alias SwarmEx.Client
