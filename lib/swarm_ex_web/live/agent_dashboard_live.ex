@@ -54,26 +54,43 @@ defmodule SwarmExWeb.AgentDashboardLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(SwarmEx.PubSub, "agents")
-      # Assuming SwarmEx.create_network() is your helper to get a client PID
       {:ok, client} = SwarmEx.create_network()
-      {:ok, agent_ids_from_client} = Client.list_agents(client)
-      string_agent_ids = Enum.map(agent_ids_from_client, &to_string/1)
 
-      # Load persisted messages for each agent
-      messages = SwarmEx.Repo.all(SwarmEx.Schemas.Agent)
-      |> Enum.map(fn agent ->
+      # Get all agents from database
+      db_agents = SwarmEx.Repo.all(SwarmEx.Schemas.Agent)
+      db_agent_ids = Enum.map(db_agents, & &1.agent_id)
+
+      # Get running agents from client
+      {:ok, running_agent_ids} = Client.list_agents(client)
+      running_agent_ids = Enum.map(running_agent_ids, &to_string/1)
+
+      # Merge both lists of agent IDs, ensuring running agents are recreated if not in DB
+      all_agent_ids = Enum.uniq(running_agent_ids ++ db_agent_ids)
+
+      # Load messages for each agent
+      messages = db_agents
+      |> Enum.map(fn agent -> 
         messages = SwarmEx.Repo.preload(agent, :messages).messages
-        |> Enum.map(fn msg -> {String.to_atom(msg.role), msg.content} end)
+        |> Enum.sort_by(& &1.inserted_at)
+        |> Enum.map(fn msg -> 
+          content = if msg.role == "assistant", do: %{text_response: msg.content}, else: msg.content
+          {String.to_atom(msg.role), content}
+        end)
         {agent.agent_id, messages}
       end)
       |> Map.new()
 
+      # Ensure empty message list for any new running agents
+      messages = Enum.reduce(running_agent_ids, messages, fn agent_id, acc ->
+        Map.put_new(acc, agent_id, [])
+      end)
+
       {:ok, assign(socket,
         client: client,
-        agents: string_agent_ids,
+        agents: all_agent_ids,
         selected_agent: nil,
         new_agent_description: "",
-        messages: Map.new(string_agent_ids, fn id -> {id, []} end),
+        messages: messages,
         current_message: "",
         loading: false
       )}
