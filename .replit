@@ -20,6 +20,23 @@ author = 38804915
 task = "shell.exec"
 args = "MIX_ENV=dev mix phx.server"
 
+[[workflows.workflow]]
+name = "Dev"
+author = 38804915
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install --prefix assets && npm run deploy --prefix assets"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "mix deps.get"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "MIX_ENV=dev mix phx.server --no-halt"
+
 [[ports]]
 localPort = 4005
 externalPort = 80
