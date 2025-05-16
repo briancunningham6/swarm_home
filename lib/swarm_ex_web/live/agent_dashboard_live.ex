@@ -153,6 +153,8 @@ defmodule SwarmExWeb.AgentDashboardLive do
     end
   end
 
+  import Ecto.Query
+
   def handle_event("kill_agent", %{"id" => agent_id_string}, socket) do
     # First, stop the agent process
     process_result = Client.stop_agent(socket.assigns.client, agent_id_string)
@@ -160,8 +162,8 @@ defmodule SwarmExWeb.AgentDashboardLive do
     # Then, delete the agent and its messages from the database
     db_result = with {:ok, agent} <- SwarmEx.Repo.get_by(SwarmEx.Schemas.Agent, agent_id: agent_id_string) do
       # Delete all associated messages first
-      from(m in SwarmEx.Schemas.Message, where: m.agent_id == ^agent.id)
-      |> SwarmEx.Repo.delete_all()
+      query = from(m in SwarmEx.Schemas.Message, where: m.agent_id == ^agent.id)
+      SwarmEx.Repo.delete_all(query)
       
       # Then delete the agent
       SwarmEx.Repo.delete(agent)
