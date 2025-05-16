@@ -1,11 +1,25 @@
-modules = ["elixir-1_18.2"]
+modules = ["elixir-1_18.2", "nodejs-20"]
 run = "mix test"
 
 [nix]
 channel = "stable-24_05"
+packages = ["elixir"]
 
 [deployment]
 run = ["sh", "-c", "mix phx.server"]
 
 [workflows]
 runButton = "Dev"
+
+[[workflows.workflow]]
+name = "Run"
+mode = "sequential"
+author = 38804915
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "MIX_ENV=dev mix phx.server"
+
+[[ports]]
+localPort = 4005
+externalPort = 80
