@@ -21,6 +21,8 @@ defmodule SwarmExWeb.AgentDashboardLive do
     end
 
     @impl true
+    @spec handle_message(any(), any()) ::
+            {:error, SwarmEx.Error.AgentError.t()} | {:ok, map(), any()}
     def handle_message(message, state) do
       response = Instructor.chat_completion(
         model: "gpt-3.5-turbo",
