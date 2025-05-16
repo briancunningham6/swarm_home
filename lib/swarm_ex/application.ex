@@ -20,6 +20,7 @@ defmodule SwarmEx.Application do
       {Registry, keys: :unique, name: SwarmEx.AgentRegistry},
       {DynamicSupervisor, name: SwarmEx.AgentSupervisor},
       {DynamicSupervisor, name: SwarmEx.ClientSupervisor},
+      {SwarmEx.NetworkManager, []},
       SwarmExWeb.Endpoint
     ]
 
