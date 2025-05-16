@@ -16,11 +16,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
       messages = SwarmEx.Repo.all(SwarmEx.Schemas.Agent)
       |> Enum.map(fn agent -> 
         messages = SwarmEx.Repo.preload(agent, :messages).messages
-        |> Enum.sort_by(& &1.inserted_at)
-        |> Enum.map(fn msg -> 
-          content = if msg.role == "assistant", do: %{text_response: msg.content}, else: msg.content
-          {String.to_atom(msg.role), content}
-        end)
+        |> Enum.map(fn msg -> {String.to_atom(msg.role), msg.content} end)
         {agent.agent_id, messages}
       end)
       |> Map.new()
