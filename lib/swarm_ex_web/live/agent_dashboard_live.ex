@@ -35,13 +35,13 @@ defmodule SwarmExWeb.AgentDashboardLive do
       )
 
       case response do
-        {:ok, reply} -> 
+        {:ok, reply} ->
           IO.puts("Got GPT response: #{inspect(reply)}")
           {:ok, reply, state}
-        {:error, error} -> 
+        {:error, error} ->
           IO.puts("Error from GPT: #{inspect(error)}")
           {:error, SwarmEx.Error.AgentError.exception(
-            agent: __MODULE__, 
+            agent: __MODULE__,
             reason: error,
             message: "Failed to get GPT response"
           )}
@@ -52,21 +52,23 @@ defmodule SwarmExWeb.AgentDashboardLive do
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Phoenix.PubSub.subscribe(SwarmEx.PubSub, "agents")
+      # Assuming SwarmEx.create_network() is your helper to get a client PID
       {:ok, client} = SwarmEx.create_network()
-      {:ok, initial_agent_ids} = Client.list_agents(client)
+      {:ok, agent_ids_from_client} = Client.list_agents(client)
+      string_agent_ids = Enum.map(agent_ids_from_client, &to_string/1)
 
       {:ok, assign(socket,
         client: client,
-        agents: initial_agent_ids,
+        agents: string_agent_ids,
         selected_agent: nil,
         new_agent_description: "",
-        messages: Map.new(initial_agent_ids, fn id -> {id, []} end),
+        messages: Map.new(string_agent_ids, fn id -> {id, []} end),
         current_message: ""
       )}
     else
       {:ok, assign(socket,
         client: nil,
-        agents: [],
+        agents: [], # Already empty, so no conversion needed here
         selected_agent: nil,
         new_agent_description: "",
         messages: %{},
@@ -77,14 +79,20 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
   def handle_event("create_agent", %{"description" => description}, socket) do
     case Client.create_agent(socket.assigns.client, DashboardAgent, instruction: description) do
-      {:ok, agent_id_string} ->
-        IO.puts("Agent created with ID: #{agent_id_string}")
+      {:ok, agent_id} -> # agent_id could be an atom or string from client
+        string_agent_id = to_string(agent_id)
+        IO.puts("Agent created with ID: #{string_agent_id}")
         {:noreply,
          socket
          |> put_flash(:info, "Agent created successfully")
-         |> assign(agents: [agent_id_string | socket.assigns.agents],
-                   messages: Map.put(socket.assigns.messages, agent_id_string, []))}
+         |> assign(agents: [string_agent_id | socket.assigns.agents],
+                   messages: Map.put(socket.assigns.messages, string_agent_id, []))}
       {:error, error} ->
+        IO.puts("Failed to create agent: #{inspect(error)}")
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to create agent: #{inspect(error)}")
+         |> assign(agents: socket.assigns.agents)}
         {:noreply, put_flash(socket, :error, "Failed to create agent: #{inspect(error)}")}
     end
   end
@@ -150,12 +158,12 @@ defmodule SwarmExWeb.AgentDashboardLive do
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Agents</h2>
             <div class="mb-6">
               <form phx-submit="create_agent" class="space-y-4">
-                <input type="text" 
+                <input type="text"
                        name="description"
                        placeholder="Agent description..."
                        class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                        value={@new_agent_description}/>
-                <button type="submit" 
+                <button type="submit"
                         class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
                   Create Agent
                 </button>
@@ -164,14 +172,14 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
             <div class="space-y-3">
               <%= for agent_id <- @agents do %>
-                <div class="flex items-center justify-between p-3 rounded-lg transition-all duration-200 
-                           <%= if @selected_agent == agent_id, do: "bg-indigo-100 border-2 border-indigo-300", else: "bg-gray-50 hover:bg-gray-100" %>">
-                  <button phx-click="select_agent" 
+                <div phx-key={agent_id} class="flex items-center justify-between p-3 rounded-lg transition-all duration-200
+                           <%= if @selected_agent == agent_id, do: "bg-indigo-100 border-2 border-indigo-300", else: "bg-gray-50 hover:bg-gray-100">">
+                  <button phx-click="select_agent"
                           phx-value-id={agent_id}
                           class={"flex-1 text-left font-medium #{if @selected_agent == agent_id, do: "text-indigo-700", else: "text-gray-700"}"}>
                     Agent <%= agent_id %>
                   </button>
-                  <button phx-click="kill_agent" 
+                  <button phx-click="kill_agent"
                           phx-value-id={agent_id}
                           class="ml-2 text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -199,12 +207,12 @@ defmodule SwarmExWeb.AgentDashboardLive do
               </div>
               <div class="p-6 border-t border-gray-100">
                 <form phx-submit="send_message" class="flex space-x-4">
-                  <input type="text" 
+                  <input type="text"
                          name="message"
                          value={@current_message}
                          placeholder="Type your message..."
                          class="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"/>
-                  <button type="submit" 
+                  <button type="submit"
                           class="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition duration-200 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
