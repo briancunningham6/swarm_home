@@ -40,6 +40,7 @@ defmodule SwarmEx.MixProject do
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "~> 0.6"},
+      {:telemetry_poller, "~> 1.0"},
       {:openai_ex, "~> 0.8.4"},
       {:instructor, "~> 0.0.5"},
       {:ecto_sql, "~> 3.10"},
