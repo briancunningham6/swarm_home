@@ -1,8 +1,53 @@
 defmodule SwarmExWeb.AgentDashboardLive do
   use Phoenix.LiveView
   alias SwarmEx.Client
-  alias SwarmExWeb.Live.Models.DefaultResponse
-  alias SwarmExWeb.Live.Agents.DashboardAgent
+
+    defmodule DefaultResponse do
+    @moduledoc "Defines a default structure for AI responses."
+    use Ecto.Schema
+
+    @primary_key false
+    embedded_schema do
+      field :text_response, :string
+    end
+  end
+
+  defmodule DashboardAgent do
+    use SwarmEx.Agent
+
+    @impl true
+    def init(opts) do
+      {:ok, opts}
+    end
+
+    @impl true
+    def handle_message(message, state) do
+      response = Instructor.chat_completion(
+        model: "gpt-3.5-turbo",
+        response_model: SwarmExWeb.AgentDashboardLive.DefaultResponse,
+        messages: [
+          %{
+            role: "user",
+            content: message
+          }
+        ]
+      )
+
+      case response do
+        {:ok, reply} ->
+          IO.puts("Got GPT response: #{inspect(reply)}")
+          {:ok, reply, state}
+        {:error, error} ->
+          IO.puts("Error from GPT: #{inspect(error)}")
+          {:error, SwarmEx.Error.AgentError.exception(
+            agent: __MODULE__,
+            reason: error,
+            message: "Failed to get GPT response"
+          )}
+      end
+    end
+  end
+
 
   def mount(_params, _session, socket) do
     if connected?(socket) do
@@ -11,10 +56,10 @@ defmodule SwarmExWeb.AgentDashboardLive do
       {:ok, client} = SwarmEx.create_network()
       {:ok, agent_ids_from_client} = Client.list_agents(client)
       string_agent_ids = Enum.map(agent_ids_from_client, &to_string/1)
-      
+
       # Load persisted messages for each agent
       messages = SwarmEx.Repo.all(SwarmEx.Schemas.Agent)
-      |> Enum.map(fn agent -> 
+      |> Enum.map(fn agent ->
         messages = SwarmEx.Repo.preload(agent, :messages).messages
         |> Enum.map(fn msg -> {String.to_atom(msg.role), msg.content} end)
         {agent.agent_id, messages}
@@ -41,6 +86,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
       )}
     end
   end
+
 
   def handle_event("create_agent", %{"description" => description}, socket) do
     case Client.create_agent(socket.assigns.client, DashboardAgent, instruction: description) do
