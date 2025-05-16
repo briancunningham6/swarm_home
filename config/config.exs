@@ -5,6 +5,7 @@ import Config
 config :tailwind, :version, "4.0.9"
 
 config :swarm_ex,
+  ecto_repos: [SwarmEx.Repo],
   default_timeout: 5_000,
   max_retries: 3,
   instructor: [
