@@ -25,10 +25,11 @@ defmodule SwarmExWeb.Live.Agents.DashboardAgent do
         IO.puts("Got GPT response: #{inspect(reply)}")
 
         # Save agent if not exists
-        {:ok, db_agent} = case SwarmEx.Repo.get_by(SwarmEx.Schemas.Agent, agent_id: to_string(state.name)) do
+        agent_id = if is_atom(state.name), do: Atom.to_string(state.name), else: state.name
+        {:ok, db_agent} = case SwarmEx.Repo.get_by(SwarmEx.Schemas.Agent, agent_id: agent_id) do
           nil -> 
             SwarmEx.Repo.insert(%SwarmEx.Schemas.Agent{
-              agent_id: Atom.to_string(state.name),
+              agent_id: agent_id,
               instruction: state.instruction
             })
           existing -> {:ok, existing}
