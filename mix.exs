@@ -41,6 +41,8 @@ defmodule SwarmEx.MixProject do
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       {:openai_ex, "~> 0.8.4"},
       {:instructor, "~> 0.0.5"},
+      {:ecto_sql, "~> 3.10"},
+      {:postgrex, ">= 0.0.0"},
       # For testing
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},

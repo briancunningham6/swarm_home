@@ -1,4 +1,3 @@
-
 defmodule SwarmExWeb.Live.Agents.DashboardAgent do
   use SwarmEx.Agent
   alias SwarmExWeb.Live.Models.DefaultResponse
@@ -23,6 +22,30 @@ defmodule SwarmExWeb.Live.Agents.DashboardAgent do
     case response do
       {:ok, reply} ->
         IO.puts("Got GPT response: #{inspect(reply)}")
+
+        # Save agent if not exists
+        {:ok, db_agent} = case SwarmEx.Repo.get_by(SwarmEx.Schemas.Agent, agent_id: Atom.to_string(state.name)) do
+          nil -> 
+            SwarmEx.Repo.insert(%SwarmEx.Schemas.Agent{
+              agent_id: Atom.to_string(state.name),
+              instruction: state.instruction
+            })
+          existing -> {:ok, existing}
+        end
+
+        # Save messages
+        SwarmEx.Repo.insert(%SwarmEx.Schemas.Message{
+          content: message,
+          role: "user",
+          agent_id: db_agent.id
+        })
+
+        SwarmEx.Repo.insert(%SwarmEx.Schemas.Message{
+          content: reply.text_response,
+          role: "assistant", 
+          agent_id: db_agent.id
+        })
+
         new_history = history ++ [
           %{role: "user", content: message},
           %{role: "assistant", content: reply.text_response}

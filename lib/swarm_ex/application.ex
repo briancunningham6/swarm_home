@@ -14,21 +14,12 @@ defmodule SwarmEx.Application do
   @spec start(start_type(), term()) :: {:ok, pid()} | {:error, term()}
   def start(_type, _args) do
     children = [
-      # Registry for tracking agent processes
+      SwarmExWeb.Telemetry,
+      SwarmEx.Repo,
       {Registry, keys: :unique, name: SwarmEx.AgentRegistry},
-
-      # Supervisor for agent processes
-      {DynamicSupervisor,
-       strategy: :one_for_one, name: SwarmEx.AgentSupervisor, max_restarts: 3, max_seconds: 5},
-
-      # Supervisor for client processes
-      {SwarmEx.ClientSupervisor, []},
-
-      {Phoenix.PubSub, name: SwarmEx.PubSub},
-
+      {DynamicSupervisor, name: SwarmEx.AgentSupervisor},
+      {DynamicSupervisor, name: SwarmEx.ClientSupervisor},
       SwarmExWeb.Endpoint
-
-      # Add any additional supervisors here
     ]
 
     # Start telemetry
