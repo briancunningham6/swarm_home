@@ -1,52 +1,8 @@
 defmodule SwarmExWeb.AgentDashboardLive do
   use Phoenix.LiveView
   alias SwarmEx.Client
-
-  defmodule DefaultResponse do
-    @moduledoc "Defines a default structure for AI responses."
-    use Ecto.Schema
-
-    @primary_key false
-    embedded_schema do
-      field :text_response, :string
-    end
-  end
-
-  defmodule DashboardAgent do
-    use SwarmEx.Agent
-
-    @impl true
-    def init(opts) do
-      {:ok, opts}
-    end
-
-    @impl true
-    def handle_message(message, state) do
-      response = Instructor.chat_completion(
-        model: "gpt-3.5-turbo",
-        response_model: SwarmExWeb.AgentDashboardLive.DefaultResponse,
-        messages: [
-          %{
-            role: "user",
-            content: message
-          }
-        ]
-      )
-
-      case response do
-        {:ok, reply} ->
-          IO.puts("Got GPT response: #{inspect(reply)}")
-          {:ok, reply, state}
-        {:error, error} ->
-          IO.puts("Error from GPT: #{inspect(error)}")
-          {:error, SwarmEx.Error.AgentError.exception(
-            agent: __MODULE__,
-            reason: error,
-            message: "Failed to get GPT response"
-          )}
-      end
-    end
-  end
+  alias SwarmExWeb.Live.Models.DefaultResponse
+  alias SwarmExWeb.Live.Agents.DashboardAgent
 
   def mount(_params, _session, socket) do
     if connected?(socket) do
