@@ -1,3 +1,4 @@
+
 defmodule SwarmExWeb.Live.Agents.DashboardAgent do
   use SwarmEx.Agent
   alias SwarmExWeb.Live.Models.DefaultResponse
@@ -51,6 +52,7 @@ defmodule SwarmExWeb.Live.Agents.DashboardAgent do
           %{role: "assistant", content: reply.text_response}
         ]
         {:ok, reply, %{state | conversation_history: new_history}}
+        
       {:error, error} ->
         IO.puts("Error from GPT: #{inspect(error)}")
         {:error, SwarmEx.Error.AgentError.exception(
@@ -62,7 +64,6 @@ defmodule SwarmExWeb.Live.Agents.DashboardAgent do
   end
 
   defp build_conversation_messages(history, new_message) do
-    # Convert history to ChatGPT message format and add system message
     [%{role: "system", content: "You are a helpful AI assistant."}] ++
     history ++
     [%{role: "user", content: new_message}]
