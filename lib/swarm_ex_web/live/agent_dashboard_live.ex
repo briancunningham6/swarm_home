@@ -171,8 +171,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
             <div class="space-y-3">
               <%= for agent_id <- @agents do %>
-                <div phx-key={agent_id} class="flex items-center justify-between p-3 rounded-lg transition-all duration-200
-                           <%= if @selected_agent == agent_id, do: "bg-indigo-100 border-2 border-indigo-300", else: "bg-gray-50 hover:bg-gray-100">">
+                <div phx-key={agent_id} class="flex items-center justify-between p-3 rounded-lg transition-all duration-200 bg-indigo-100 border-2 border-indigo-300">
                   <button phx-click="select_agent"
                           phx-value-id={agent_id}
                           class={"flex-1 text-left font-medium #{if @selected_agent == agent_id, do: "text-indigo-700", else: "text-gray-700"}"}>
