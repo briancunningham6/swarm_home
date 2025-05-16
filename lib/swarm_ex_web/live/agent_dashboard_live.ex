@@ -154,8 +154,21 @@ defmodule SwarmExWeb.AgentDashboardLive do
   end
 
   def handle_event("kill_agent", %{"id" => agent_id_string}, socket) do
-    case Client.stop_agent(socket.assigns.client, agent_id_string) do
-      :ok ->
+    # First, stop the agent process
+    process_result = Client.stop_agent(socket.assigns.client, agent_id_string)
+    
+    # Then, delete the agent and its messages from the database
+    db_result = with {:ok, agent} <- SwarmEx.Repo.get_by(SwarmEx.Schemas.Agent, agent_id: agent_id_string) do
+      # Delete all associated messages first
+      from(m in SwarmEx.Schemas.Message, where: m.agent_id == ^agent.id)
+      |> SwarmEx.Repo.delete_all()
+      
+      # Then delete the agent
+      SwarmEx.Repo.delete(agent)
+    end
+
+    case {process_result, db_result} do
+      {:ok, {:ok, _}} ->
         new_agents = List.delete(socket.assigns.agents, agent_id_string)
         new_selected_agent =
           if socket.assigns.selected_agent == agent_id_string do
@@ -166,15 +179,17 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
         {:noreply,
          socket
-         |> put_flash(:info, "Agent terminated successfully")
+         |> put_flash(:info, "Agent terminated and records deleted successfully")
          |> assign(
            agents: new_agents,
            selected_agent: new_selected_agent,
            messages: Map.delete(socket.assigns.messages, agent_id_string)
          )}
-      {:error, :agent_not_found} ->
-        {:noreply, put_flash(socket, :error, "Agent #{agent_id_string} not found.")}
-      {:error, error} ->
+      
+      {{:error, :agent_not_found}, _} ->
+        {:noreply, put_flash(socket, :error, "Agent #{agent_id_string} not found")}
+      
+      {error, _} ->
         {:noreply, put_flash(socket, :error, "Failed to terminate agent: #{inspect(error)}")}
     end
   end
