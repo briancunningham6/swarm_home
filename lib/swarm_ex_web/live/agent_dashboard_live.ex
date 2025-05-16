@@ -62,7 +62,8 @@ defmodule SwarmExWeb.AgentDashboardLive do
         selected_agent: nil,
         new_agent_description: "",
         messages: Map.new(string_agent_ids, fn id -> {id, []} end),
-        current_message: ""
+        current_message: "",
+        loading: false
       )}
     else
       {:ok, assign(socket,
@@ -104,6 +105,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
     selected_agent_id = socket.assigns.selected_agent
 
     if is_binary(selected_agent_id) && selected_agent_id != "" do
+      socket = assign(socket, loading: true)
       case Client.send_message(socket.assigns.client, selected_agent_id, message) do
         {:ok, response} ->
           messages = Map.update(
@@ -112,7 +114,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
             [{:user, message}, {:agent, response}],
             &(&1 ++ [{:user, message}, {:agent, response}])
           )
-          {:noreply, assign(socket, messages: messages, current_message: "")}
+          {:noreply, assign(socket, messages: messages, current_message: "", loading: false)}
         {:error, error} ->
           {:noreply, put_flash(socket, :error, "Failed to send message: #{inspect(error)}")}
       end
@@ -149,11 +151,11 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-4">
+    <div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-6">
       <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <!-- Sidebar -->
-          <div class="lg:col-span-1 bg-white rounded-xl shadow-lg p-6">
+          <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-6 h-[85vh] flex flex-col">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Agents</h2>
             <div class="mb-6">
               <form phx-submit="create_agent" class="space-y-4">
@@ -171,17 +173,17 @@ defmodule SwarmExWeb.AgentDashboardLive do
 
             <div class="space-y-3">
               <%= for agent_id <- @agents do %>
-                <div phx-key={agent_id} class="flex items-center justify-between p-3 rounded-lg transition-all duration-200 bg-indigo-100 border-2 border-indigo-300">
+                <div phx-key={agent_id} class="flex items-center justify-between p-4 rounded-lg transition-all duration-200 hover:bg-indigo-50 border border-indigo-100 mb-2">
                   <button phx-click="select_agent"
                           phx-value-id={agent_id}
-                          class={"flex-1 text-left font-medium #{if @selected_agent == agent_id, do: "text-indigo-700", else: "text-gray-700"}"}>
+                          class={"flex-1 text-left font-medium #{if @selected_agent == agent_id, do: "text-indigo-600", else: "text-gray-700"}"}>
                     Agent <%= agent_id %>
                   </button>
                   <button phx-click="kill_agent"
                           phx-value-id={agent_id}
-                          class="ml-2 text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                          class="ml-2 text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
@@ -190,7 +192,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
           </div>
 
           <!-- Chat Area -->
-          <div class="lg:col-span-3 bg-white rounded-xl shadow-lg flex flex-col h-[800px]">
+          <div class="lg:col-span-8 bg-white rounded-xl shadow-lg flex flex-col h-[85vh]">
             <%= if @selected_agent do %>
               <div class="flex-1 p-6 overflow-y-auto">
                 <%= for {type, raw_content} <- @messages[@selected_agent] || [] do %>
@@ -202,6 +204,9 @@ defmodule SwarmExWeb.AgentDashboardLive do
                     </div>
                   </div>
                 <% end %>
+              </div>
+              <div :if={@loading} class="flex justify-center items-center p-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
               </div>
               <div class="p-6 border-t border-gray-100">
                 <form phx-submit="send_message" class="flex space-x-4">
