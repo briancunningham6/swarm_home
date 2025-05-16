@@ -14,8 +14,9 @@ defmodule SwarmEx.Application do
   @spec start(start_type(), term()) :: {:ok, pid()} | {:error, term()}
   def start(_type, _args) do
     children = [
-      SwarmExWeb.Telemetry,
       SwarmEx.Repo,
+      SwarmExWeb.Telemetry,
+      {Phoenix.PubSub, name: SwarmEx.PubSub},
       {Registry, keys: :unique, name: SwarmEx.AgentRegistry},
       {DynamicSupervisor, name: SwarmEx.AgentSupervisor},
       {DynamicSupervisor, name: SwarmEx.ClientSupervisor},
