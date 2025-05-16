@@ -152,10 +152,10 @@ defmodule SwarmExWeb.AgentDashboardLive do
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 p-6">
-      <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="max-w-screen-2xl mx-auto">
+        <div class="grid grid-cols-12 gap-8">
           <!-- Sidebar -->
-          <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-6 h-[85vh] flex flex-col">
+          <div class="col-span-3 bg-white rounded-xl shadow-lg p-6 h-[85vh] flex flex-col">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Agents</h2>
             <div class="mb-6">
               <form phx-submit="create_agent" class="space-y-4">
@@ -192,7 +192,7 @@ defmodule SwarmExWeb.AgentDashboardLive do
           </div>
 
           <!-- Chat Area -->
-          <div class="lg:col-span-8 bg-white rounded-xl shadow-lg flex flex-col h-[85vh]">
+          <div class="col-span-9 bg-white rounded-xl shadow-lg flex flex-col h-[85vh]">
             <%= if @selected_agent do %>
               <div class="flex-1 p-6 overflow-y-auto">
                 <%= for {type, raw_content} <- @messages[@selected_agent] || [] do %>
